@@ -37,7 +37,6 @@ dependencies:
   provider: ^6.1.5+1
   http: ^0.13.6
   flutter_dotenv: ^6.0.0
-  flutter_screenutil: ^5.8.4
 
 dev_dependencies:
   flutter_test:
@@ -62,6 +61,7 @@ flutter:
   uses-material-design: true
 
   assets:
+    - assets/.env
     - assets/images/
 
   fonts:

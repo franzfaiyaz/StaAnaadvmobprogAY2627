@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../constants.dart';
+import '../custom_text.dart';
 import '../models/product_model.dart';
 import '../services/product_service.dart';
-import '../screens/product_screen.dart';
-import '../screens/settings_screen.dart';
-import '../custom_text.dart';
+import 'product_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -18,6 +18,7 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Product> _filteredProducts = [];
   String _query = '';
   bool _loading = true;
+  bool _hasError = false;
 
   @override
   void initState() {
@@ -26,20 +27,20 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _load() async {
-    setState(() => _loading = true);
+    setState(() {
+      _loading = true;
+      _hasError = false;
+    });
+
     try {
       _allProducts = await ProductService.getAllProducts();
-    } catch (e, st) {
-      // Log and continue with empty list to avoid leaving spinner forever.
-      // In production use a logging framework.
-      // ignore: avoid_print
-      print('Error loading products: $e\n$st');
+      _filteredProducts = List.from(_allProducts);
+    } catch (_) {
       _allProducts = [];
+      _filteredProducts = [];
+      _hasError = true;
     } finally {
-      setState(() {
-        _filteredProducts = List.from(_allProducts);
-        _loading = false;
-      });
+      setState(() => _loading = false);
     }
   }
 
@@ -49,7 +50,6 @@ class _HomeScreenState extends State<HomeScreen> {
   void _filter(String q) {
     setState(() {
       _query = q;
-      // Enhancement 1: Added search bar
       final qNorm = _normalize(q);
       _filteredProducts = _allProducts.where((p) {
         return _normalize(p.name).contains(qNorm) ||
@@ -66,23 +66,21 @@ class _HomeScreenState extends State<HomeScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.settings),
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const SettingsScreen()),
-            ),
+            onPressed: () => Navigator.pushNamed(context, '/settings'),
           ),
         ],
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const CustomText(
-              'Sample product catalogue',
+              appSubtitle,
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
             ),
             const SizedBox(height: 12),
+            // Enhancement 1: Search bar above the product list.
             TextField(
               decoration: InputDecoration(
                 hintText: 'Search products...',
@@ -102,82 +100,78 @@ class _HomeScreenState extends State<HomeScreen> {
               onChanged: _filter,
             ),
             const SizedBox(height: 16),
-            Expanded(
-              child: _loading
-                  ? const Center(child: CircularProgressIndicator())
-                  : _filteredProducts.isEmpty
-                  ? const Center(child: Text('No products found'))
-                  : ListView.builder(
-                      itemCount: _filteredProducts.length,
-                      itemBuilder: (context, index) {
-                        final product = _filteredProducts[index];
-                        return Card(
-                          margin: const EdgeInsets.only(bottom: 16),
-                          child: ListTile(
-                            contentPadding: const EdgeInsets.all(16),
-                            leading: SizedBox(
-                              width: 64,
-                              height: 64,
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(6),
-                                child: Image.network(
-                                  product.imageUrl,
-                                  width: 64,
-                                  height: 64,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) =>
-                                      Container(
-                                        color: Colors.grey.shade200,
-                                        child: const Icon(
-                                          Icons.broken_image,
-                                          color: Colors.grey,
-                                          size: 36,
-                                        ),
-                                      ),
-                                  loadingBuilder:
-                                      (context, child, loadingProgress) {
-                                        if (loadingProgress == null) {
-                                          return child;
-                                        }
-                                        return Container(
-                                          color: Colors.grey.shade100,
-                                          child: const Center(
-                                            child: SizedBox(
-                                              width: 20,
-                                              height: 20,
-                                              child: CircularProgressIndicator(
-                                                strokeWidth: 2,
-                                              ),
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                ),
-                              ),
-                            ),
-                            title: Text(product.name),
-                            subtitle: Text(
-                              product.description,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            trailing: Text(
-                              '\$${product.price.toStringAsFixed(2)}',
-                            ),
-                            onTap: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => ProductScreen(product: product),
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-            ),
+            Expanded(child: _buildBody()),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildBody() {
+    if (_loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (_hasError) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Failed to load products',
+              style: TextStyle(fontSize: 18),
+            ),
+            const SizedBox(height: 12),
+            ElevatedButton(onPressed: _load, child: const Text('Retry')),
+          ],
+        ),
+      );
+    }
+
+    if (_filteredProducts.isEmpty) {
+      return const Center(child: Text('No products found'));
+    }
+
+    return ListView.builder(
+      itemCount: _filteredProducts.length,
+      itemBuilder: (context, index) {
+        final product = _filteredProducts[index];
+        return Card(
+          margin: const EdgeInsets.only(bottom: 16),
+          child: ListTile(
+            contentPadding: const EdgeInsets.all(16),
+            leading: SizedBox(
+              width: 64,
+              height: 64,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(6),
+                child: Image.network(
+                  product.imageUrl,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => Container(
+                    color: Colors.grey.shade200,
+                    child: const Icon(Icons.broken_image, color: Colors.grey),
+                  ),
+                ),
+              ),
+            ),
+            title: Text(product.name),
+            subtitle: Text(
+              product.description,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            trailing: Text('\$${product.price.toStringAsFixed(2)}'),
+            // Enhancement 2: Navigate to details page on card tap.
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => ProductScreen(product: product),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }
