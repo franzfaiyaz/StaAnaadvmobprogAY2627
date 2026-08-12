@@ -1,80 +1,141 @@
 import 'package:flutter/material.dart';
 
-import '../models/product_model.dart';
 import '../custom_text.dart';
+import '../models/product_model.dart';
+import 'settings_screen.dart';
 
-// Enhancement 2: Added details page
-class ProductScreen extends StatelessWidget {
+// Enhancement 2: Details page shown when a product card is tapped.
+class ProductScreen extends StatefulWidget {
   final Product product;
 
   const ProductScreen({super.key, required this.product});
 
   @override
+  State<ProductScreen> createState() => _ProductScreenState();
+}
+
+class _ProductScreenState extends State<ProductScreen> {
+  bool _showFullDescription = false;
+
+  static const _headerColor = Color(0xFFB8CDD9);
+
+  @override
   Widget build(BuildContext context) {
+    final product = widget.product;
+
     return Scaffold(
-      appBar: AppBar(title: Text(product.name)),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
+      backgroundColor: _headerColor,
+      body: SafeArea(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: Image.network(
-                product.imageUrl,
-                width: double.infinity,
-                height: 220,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => Container(
-                  width: double.infinity,
-                  height: 220,
-                  color: Colors.grey.shade200,
-                  child: const Center(
-                    child: Icon(
-                      Icons.broken_image,
-                      color: Colors.grey,
-                      size: 48,
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back, color: Colors.black87),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.menu, color: Colors.black87),
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const SettingsScreen(),
+                      ),
                     ),
                   ),
-                ),
-                loadingBuilder: (context, child, loadingProgress) {
-                  if (loadingProgress == null) return child;
-                  return Container(
-                    width: double.infinity,
-                    height: 220,
-                    color: Colors.grey.shade100,
-                    child: const Center(child: CircularProgressIndicator()),
-                  );
-                },
+                ],
               ),
             ),
-            const SizedBox(height: 20),
-            Text(
-              product.name,
-              style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            CustomText(
-              product.description,
-              style: const TextStyle(fontSize: 16),
-            ),
-            const SizedBox(height: 20),
-            Text(
-              'Price: \$${product.price.toStringAsFixed(2)}',
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
-            ),
-            const Spacer(),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).primaryColor,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+            Expanded(
+              flex: 4,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 32),
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: Image.network(
+                        product.imageUrl,
+                        fit: BoxFit.contain,
+                        errorBuilder: (_, __, ___) => const Icon(
+                          Icons.image,
+                          size: 80,
+                          color: Colors.white70,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextButton(
+                      onPressed: () {
+                        setState(() => _showFullDescription = true);
+                      },
+                      style: TextButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: Colors.black87,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 6,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                      ),
+                      child: const CustomText(
+                        'Read All',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                  ],
                 ),
-                onPressed: () => ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(const SnackBar(content: Text('Added to cart'))),
-                child: const Text('Add to cart'),
+              ),
+            ),
+            Expanded(
+              flex: 5,
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.fromLTRB(24, 28, 24, 16),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(28),
+                    topRight: Radius.circular(28),
+                  ),
+                ),
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        product.name,
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        product.description,
+                        textAlign: TextAlign.justify,
+                        maxLines: _showFullDescription ? null : 5,
+                        overflow: _showFullDescription
+                            ? TextOverflow.visible
+                            : TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 14,
+                          height: 1.5,
+                          color: Colors.grey.shade800,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
           ],
