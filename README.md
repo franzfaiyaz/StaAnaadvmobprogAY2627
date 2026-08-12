@@ -23,5 +23,3 @@ Sa paggawa ng activity na ito, mas naunawaan ko kung paano mag-manage ng state s
 **Ano ang natutunan ko**
 
 Sa activity na ito, natutunan ko kung paano gumawa ng simple pero organisadong shopping app gamit ang Flutter. Nakita ko kung paano ihiwalay ang data, UI, at state para mas madaling i-maintain ang project. Mas malinaw rin ang flow ng app dahil ang `HomeScreen` lang ang nagre-request ng produkto mula sa `ProductService`, at kapag may pinindot na item, dinadala ang buong `Product` object sa `ProductScreen` para doon ipakita ang detalye.
-
- 
