@@ -76,3 +76,31 @@ The application successfully demonstrates:
 
 ---
  
+## Lab Activity 2: Discussion
+
+**Ano ang natutunan ko**
+
+Sa activity na ito, natutunan ko kung paano gumawa ng simple pero organisadong shopping app gamit ang Flutter. Nakita ko kung paano ihiwalay ang data, UI, at state para mas madaling i-maintain ang project. Mas malinaw rin ang flow ng app dahil ang `HomeScreen` lang ang nagre-request ng produkto mula sa `ProductService`, at kapag may pinindot na item, dinadala ang buong `Product` object sa `ProductScreen` para doon ipakita ang detalye.
+
+**Paano ginamit ang assets/images**
+
+Ginamit ko rin ang `assets/images/` para sa mga product thumbnail at UI icon. Dahil naka-register na ang assets sa `pubspec.yaml`, mas madali itong gamiting sa `Image.asset()` o `Image.network()` kapag nag-load ng images sa app. Importante na nakaayos ang assets folder para hindi magka-issue sa build kapag nagpakita ng image sa screen.
+
+**Project structure**
+
+- Model: `product_model.dart` para sa `Product` data structure.
+- Service: `product_service.dart` para sa pagkuha ng listahan ng produkto at para maging handa sa future API integration.
+- Screens: `home_screen.dart`, `product_screen.dart`, at `settings_screen.dart` para sa UI.
+- Provider: `theme_provider.dart` para hawakan ang Dark/Light Mode state sa buong app.
+
+**Enhancements**
+
+- Search bar: Naglagay ng search filter sa `home_screen.dart` para makahanap agad ng produkto base sa pangalan o description.
+- Product details: Pag-tap sa item, pupunta sa `product_screen.dart` para makita ang buong detalye ng produkto.
+- Settings page: May toggle para sa Dark Mode at Light Mode gamit ang `Provider`.
+
+**Reflection**
+
+Mas na-appreciate ko dito kung paano pinaghihiwalay ang data at UI sa Flutter app. Na-realize ko rin na kahit maliit ang project, malaking tulong ang mga assets at maayos na folder structure kapag nagpapakita ng imahe. Sana sa susunod, mas marami pa akong matutunan sa pag-integrate ng tunay na API at `.env` configuration para sa mas professional na app setup.
+
+ 
