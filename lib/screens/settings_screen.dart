@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/theme_provider.dart';
+import '../widgets/chat_fab.dart';
 
 // Enhancement 3: Settings page with dark/light mode switch.
 class SettingsScreen extends StatelessWidget {
@@ -22,6 +23,29 @@ class SettingsScreen extends StatelessWidget {
             onChanged: themeProvider.toggleTheme,
           ),
         ],
+      ),
+      // Enhancement 2: Chat FloatingActionButton on non-cart screens.
+      floatingActionButton: const ChatFab(),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: 2,
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.shopping_cart),
+            label: 'Cart',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.settings),
+            label: 'Settings',
+          ),
+        ],
+        onTap: (index) {
+          if (index == 0) {
+            Navigator.pushReplacementNamed(context, '/home');
+          } else if (index == 1) {
+            Navigator.pushReplacementNamed(context, '/cart');
+          }
+        },
       ),
     );
   }

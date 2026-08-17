@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
-import '../custom_text.dart';
 import '../models/product_model.dart';
+import '../providers/cart_provider.dart';
+import '../widgets/custom_text.dart';
 import 'settings_screen.dart';
 
-// Enhancement 2: Details page shown when a product card is tapped.
+// Existing detail screen — opened when a product card or cart item is tapped.
 class ProductScreen extends StatefulWidget {
   final Product product;
 
@@ -18,6 +20,17 @@ class _ProductScreenState extends State<ProductScreen> {
   bool _showFullDescription = false;
 
   static const _headerColor = Color(0xFFB8CDD9);
+
+  Future<void> _addToCart(BuildContext context) async {
+    await context.read<CartProvider>().addToCart(widget.product);
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Added to cart'),
+        duration: Duration(seconds: 2),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -119,6 +132,15 @@ class _ProductScreenState extends State<ProductScreen> {
                           color: Colors.black,
                         ),
                       ),
+                      const SizedBox(height: 8),
+                      Text(
+                        '\$${product.price.toStringAsFixed(2)}',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.orange.shade700,
+                        ),
+                      ),
                       const SizedBox(height: 12),
                       Text(
                         product.description,
@@ -131,6 +153,28 @@ class _ProductScreenState extends State<ProductScreen> {
                           fontSize: 14,
                           height: 1.5,
                           color: Colors.grey.shade800,
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: () => _addToCart(context),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.orange.shade700,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          child: const Text(
+                            'ADD TO CART',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
                       ),
                     ],

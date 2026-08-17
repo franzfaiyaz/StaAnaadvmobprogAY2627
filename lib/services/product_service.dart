@@ -1,35 +1,38 @@
 import 'dart:convert';
 
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 
+import '../constants.dart';
 import '../models/product_model.dart';
 
 class ProductService {
+  static String get _host => host;
+
   static Future<List<Product>> getAllProducts() async {
-    final host = dotenv.isInitialized ? dotenv.env['HOST'] : null;
+    final uri = Uri.parse('$_host/products');
+    final response = await http.get(uri).timeout(const Duration(seconds: 10));
 
-    if (host == null || host.isEmpty) {
-      return _sampleProducts();
+    if (response.statusCode != 200) {
+      throw Exception('Failed to load products: ${response.statusCode}');
     }
 
-    try {
-      final uri = Uri.parse('$host/products');
-      final response = await http.get(uri).timeout(const Duration(seconds: 10));
+    final body = jsonDecode(response.body);
+    final productsJson = _extractProducts(body);
 
-      if (response.statusCode != 200) {
-        throw Exception('Failed to load products: ${response.statusCode}');
-      }
+    return productsJson
+        .map<Product>((json) => Product.fromJson(json as Map<String, dynamic>))
+        .toList();
+  }
 
-      final body = jsonDecode(response.body);
-      final productsJson = _extractProducts(body);
+  static Future<Product> getProductById(int id) async {
+    final uri = Uri.parse('$_host/products/$id');
+    final response = await http.get(uri).timeout(const Duration(seconds: 10));
 
-      return productsJson
-          .map<Product>((json) => Product.fromJson(json as Map<String, dynamic>))
-          .toList();
-    } catch (_) {
-      throw Exception('Failed to load products');
+    if (response.statusCode != 200) {
+      throw Exception('Failed to load product $id: ${response.statusCode}');
     }
+
+    return Product.fromJson(jsonDecode(response.body) as Map<String, dynamic>);
   }
 
   static List<dynamic> _extractProducts(dynamic body) {
@@ -39,21 +42,5 @@ class ProductService {
       if (products is List) return products;
     }
     throw Exception('Unexpected API response');
-  }
-
-  static List<Product> _sampleProducts() {
-    return const [
-      Product(
-        id: '001',
-        name: 'Wireless Headphones',
-        description:
-            'Comfortable over-ear headphones with noise reduction. '
-            'Perfect for music lovers and remote workers who need clear audio '
-            'and all-day comfort during long listening sessions.',
-        price: 89.99,
-        imageUrl:
-            'https://images.unsplash.com/photo-1512499617640-c2f999018b72?auto=format&fit=crop&w=800&q=80',
-      ),
-    ];
   }
 }

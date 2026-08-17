@@ -1,45 +1,59 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 
-import 'providers/theme_provider.dart';
+// screens
 import 'screens/home_screen.dart';
 import 'screens/settings_screen.dart';
+import 'screens/cart_screen.dart';
+
+// providers
+import 'providers/theme_provider.dart';
+import 'providers/cart_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  try {
+  SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]).then((
+    _,
+  ) async {
     await dotenv.load(fileName: 'assets/.env');
-  } catch (_) {}
-  await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
-
-  runApp(
-    ChangeNotifierProvider(
-      create: (_) => ThemeProvider(),
-      child: const MyApp(),
-    ),
-  );
+    runApp(const RoblesAdvMobProg());
+  });
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class RoblesAdvMobProg extends StatelessWidget {
+  const RoblesAdvMobProg({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final themeModel = Provider.of<ThemeProvider>(context);
-
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Product Catalogue',
-      theme: themeModel.lightTheme,
-      darkTheme: themeModel.darkTheme,
-      themeMode: themeModel.isDark ? ThemeMode.dark : ThemeMode.light,
-      initialRoute: '/home',
-      routes: {
-        '/home': (context) => const HomeScreen(),
-        '/settings': (context) => const SettingsScreen(),
-      },
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider(create: (_) => CartProvider()),
+      ],
+      child: ScreenUtilInit(
+        designSize: const Size(412, 715),
+        minTextAdapt: true,
+        splitScreenMode: true,
+        builder: (build, child) {
+          final themeModel = build.watch<ThemeProvider>();
+          return MaterialApp(
+            debugShowCheckedModeBanner: false,
+            theme: themeModel.lightTheme,
+            darkTheme: themeModel.darkTheme,
+            themeMode: themeModel.isDark ? ThemeMode.dark : ThemeMode.light,
+            title: 'E-Commerce App',
+            initialRoute: '/home',
+            routes: {
+              '/home': (context) => const HomeScreen(),
+              '/settings': (context) => const SettingsScreen(),
+              '/cart': (context) => const CartScreen(),
+            },
+          );
+        },
+      ),
     );
   }
 }
