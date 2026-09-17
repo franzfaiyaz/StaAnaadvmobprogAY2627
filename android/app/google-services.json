@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1043464595993",
+    "project_id": "advmobprog-firebase-72968",
+    "storage_bucket": "advmobprog-firebase-72968.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1043464595993:android:c9c90fe25bca5ba62c1888",
+        "android_client_info": {
+          "package_name": "com.example.staana_advmobprog"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBGJ_RMuGsmzAkk0cNRigm9XE3dxzFBN70"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
