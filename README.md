@@ -1,37 +1,19 @@
-﻿# Lab Activity 5: Firebase Authentication and UserService
-
+﻿
 ## Student Information
 
 Name: Justine Francis Sta. Ana
 
 Course: CTADMOBL – Advance Mobile Programming
 
-Lab Activity: Lab Activity 5
+Lab Activity: Lab Activity 6
+# Lab Activity 6: Discussion
 
-## Discussion
+## Firestore user profiles
 
-### DummyJSON and Firebase workflow
-The application supports two separate authentication workflows. The DummyJSON workflow sends the username and password to `https://dummyjson.com/auth/login`. When the API returns a successful response, the application saves the returned user information and access token with `SharedPreferences`, then opens the home screen. The saved token is checked by the splash screen when the application is opened again. DummyJSON accounts and Firebase accounts are separate and cannot be used interchangeably.
+When a Firebase account is created or signs in the application stores its profile in the `Users` collection. The Firebase UID is used as the document ID. Is also saved in the `uid` field. The document has profile information like the email address, first name, last name, username, age, phone number and profile image. Authentication tokens and passwords are not saved in this collection.
 
-The Firebase workflow uses the Firebase Authentication SDK. A new user completes the signup form with their first name, last name, age, contact number, username, email address, and password. `createUserWithEmailAndPassword()` creates the Firebase account, while the profile information and refreshed Firebase ID token are saved locally. During sign-in, the user selects Firebase and enters the email address and password registered in Firebase. Firebase then validates the credentials and returns the authenticated user.
+Each conversation is saved in `chat_rooms/{chatRoomId}/messages`. The room ID is created by sorting the two Firebase UIDs and then joining them with an underscore. Because the same two IDs create the sorted value, for either person both users end up in the same room.
 
-### Workflow from sign-in to sign-up
-The sign-in screen lets the user choose either DummyJSON or Firebase. The selected option is passed to `UserService.signIn()`, which calls the matching authentication implementation. A user who does not have a Firebase account can open the signup screen and complete the validated registration form. After successful registration, the application opens the home screen. The splash screen checks the saved session on later launches and redirects either to the home screen or back to sign-in.
+Each message document has the sender UID and email the UID, the message text and a Firestore timestamp. The application watches the rooms `messages` subcollection using Firestore snapshots that are ordered by timestamp. When a message is sent or received the stream updates the chat screen without needing a refresh.
 
-### Main idea of UserService
-`UserService` is the central service layer for authentication and user data. It keeps network requests, Firebase SDK calls, token refresh, local session storage, logout, username updates, password changes, and account deletion out of the widgets. The screens are responsible for collecting input and showing results, while `UserService` handles the authentication rules and data flow. This separation makes the application easier to test, maintain, and extend.
-
-### Benefits of Firebase in this application
-Firebase Authentication provides a production-oriented identity system instead of requiring the application to manage passwords itself. It provides secure email and password authentication, managed sessions, token refresh, account creation, reauthentication before changing a password, and account deletion. Firebase Authentication can also be combined with Firebase security rules so that protected data is available only to the authenticated user.
-
-Compared with the demonstration DummyJSON API, Firebase gives the application better control over account ownership and security. DummyJSON is useful for practicing API requests and displaying user data, but it is not the application's own authentication database. Firebase is therefore more suitable for the current Flutter application when real user accounts, persistent sessions, and protected backend data are required.
-
-
-## Implemented Enhancements
-
-- Firebase and DummyJSON sign-in through `UserService`.
-- Firebase account creation with signup validation.
-- Firebase ID-token refresh and persistent sessions.
-- Username update, password change, account deletion, and sign-out.
-- Profile display based on the current `LoginType`.
-- Logout from the profile and settings screens with a redirect to sign-in
+The chat list leaves out the signed-in Firebase user so they can't usually choose themselves. The chat service also checks the sender and receiver UIDs before starting a conversation or sending a message. If they are the same the action is blocked with an error message.

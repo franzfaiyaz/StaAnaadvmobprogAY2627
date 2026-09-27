@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:http/http.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -14,6 +15,7 @@ class UserService {
 
   final firebase_auth.FirebaseAuth _firebaseAuth =
       firebase_auth.FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   static String parseLoginError(dynamic error) {
     final raw = error?.toString() ?? '';
@@ -98,7 +100,8 @@ class UserService {
       final firebaseUser = credential.user;
       if (firebaseUser == null) throw Exception('Unable to sign in.');
       final token = await firebaseUser.getIdToken(true);
-      final userData = _firebaseUserData(firebaseUser, token);
+      final userData = await _loadFirebaseUserData(firebaseUser, token);
+      await _saveFirebaseProfile(firebaseUser, userData);
       await saveUserData(userData);
       return userData;
     } on firebase_auth.FirebaseAuthException catch (error) {
@@ -135,6 +138,7 @@ class UserService {
           'contactNo': contactNo.trim(),
           'username': username.trim(),
         });
+      await _saveFirebaseProfile(refreshedUser, userData);
       await saveUserData(userData);
       return userData;
     } on firebase_auth.FirebaseAuthException catch (error) {
@@ -148,7 +152,14 @@ class UserService {
 
     final prefs = await SharedPreferences.getInstance();
     if (await _currentLoginType() == LoginType.firebase) {
-      await _firebaseAuth.currentUser?.updateDisplayName(trimmedUsername);
+      final user = _firebaseAuth.currentUser;
+      await user?.updateDisplayName(trimmedUsername);
+      if (user != null) {
+        await _firestore.collection('Users').doc(user.uid).set({
+          'uid': user.uid,
+          'username': trimmedUsername,
+        }, SetOptions(merge: true));
+      }
     }
     await prefs.setString('username', trimmedUsername);
   }
@@ -179,7 +190,9 @@ class UserService {
     final loginType = await _currentLoginType();
     if (loginType == LoginType.firebase && _firebaseAuth.currentUser != null) {
       try {
-        await _firebaseAuth.currentUser!.delete();
+        final user = _firebaseAuth.currentUser!;
+        await _firestore.collection('Users').doc(user.uid).delete();
+        await user.delete();
       } on firebase_auth.FirebaseAuthException catch (error) {
         throw Exception(_firebaseErrorMessage(error));
       }
@@ -289,6 +302,39 @@ class UserService {
       'firebaseUid': user.uid,
       'loginType': LoginType.firebase.name,
     };
+  }
+
+  Future<Map<String, dynamic>> _loadFirebaseUserData(
+    firebase_auth.User user,
+    String? token,
+  ) async {
+    final userData = _firebaseUserData(user, token);
+    final snapshot = await _firestore.collection('Users').doc(user.uid).get();
+    if (snapshot.exists) userData.addAll(snapshot.data() ?? {});
+    userData
+      ..['uid'] = user.uid
+      ..['firebaseUid'] = user.uid
+      ..['email'] = user.email ?? ''
+      ..['accessToken'] = token ?? ''
+      ..['loginType'] = LoginType.firebase.name;
+    return userData;
+  }
+
+  Future<void> _saveFirebaseProfile(
+    firebase_auth.User user,
+    Map<String, dynamic> userData,
+  ) {
+    return _firestore.collection('Users').doc(user.uid).set({
+      'uid': user.uid,
+      'email': user.email ?? '',
+      'firstName': userData['firstName'] ?? '',
+      'lastName': userData['lastName'] ?? '',
+      'username': userData['username'] ?? '',
+      'age': userData['age'] ?? 0,
+      'contactNo': userData['contactNo'] ?? '',
+      'image': userData['image'] ?? '',
+      'loginType': LoginType.firebase.name,
+    }, SetOptions(merge: true));
   }
 
   Future<void> _refreshFirebaseToken(firebase_auth.User user) async {

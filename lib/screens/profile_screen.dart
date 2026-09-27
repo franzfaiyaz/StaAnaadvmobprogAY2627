@@ -28,14 +28,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
     try {
       final userData = await UserService().getUserData();
       final user = User.fromJson(userData);
-      final carts = await CartService().getCartsByUser(user.id);
-
       if (!mounted) return;
       setState(() {
         _user = user;
-        _carts = carts;
         _loading = false;
       });
+
+      // Firebase users have no DummyJSON user ID, so cart loading is separate.
+      if (user.loginType != LoginType.dummyJson.name || user.id <= 0) return;
+      try {
+        final carts = await CartService().getCartsByUser(user.id);
+        if (!mounted) return;
+        setState(() => _carts = carts);
+      } catch (_) {
+        // A cart API failure should not make the user's profile unavailable.
+      }
     } catch (e) {
       if (!mounted) return;
       setState(() => _loading = false);
